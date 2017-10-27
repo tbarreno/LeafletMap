@@ -1,0 +1,142 @@
+---
+title: "Cascade Volcanoes"
+author: "Tinguaro Barreno"
+date: "October 26, 2017"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+This map shows the 82
+[Cascade Volcanoes](https://en.wikipedia.org/wiki/List_of_Cascade_volcanoes),
+formed as a result of subduction along the 
+[Cascadia subduction zone](https://en.wikipedia.org/wiki/List_of_Cascade_volcanoes)
+in the Pacific Northwest of North America.
+
+```{r data-loading, echo=FALSE}
+# CSV read
+cascade_volcanoes <- read.csv("Cascade_Volcanoes.csv")
+```
+```{r the-plot, echo=FALSE}
+# Library load
+library("leaflet")
+
+# This funcion sets the icon color by type inside the 'awesomeIcons'
+getColor <- function( vei ) {
+  sapply(cascade_volcanoes$LastEruptionVEI, function(vei) {
+  if( vei == "1" || vei == "1?" ) {
+    "green"
+  } else if( vei == "2" || vei == "2?") {
+    "lightgreen"
+  } else if( vei == "3" || vei == "3?") {
+    "orange"
+  } else if( vei == "4" || vei == "4?") {
+    "red"
+  } else if( vei == "5" || vei == "5?") {
+    "purple"
+  } else {
+    "lightgray"
+  } })
+}
+
+# This function sets the icon text
+getName <- function( vei )
+{
+  sapply(cascade_volcanoes$LastEruptionVEI, function(vei) {
+    if( vei == "Unknown") {
+      "-"
+    } else {
+      paste( "<b>", vei, "</b>" )
+    }
+  })
+}
+
+# Creates the icons
+icons <- awesomeIcons(
+  text = getName( cascade_volcanoes ),
+  iconColor = "black",
+  markerColor = getColor( cascade_volcanoes )
+)
+
+# Generate the interactive map:
+cv_plot <- leaflet( cascade_volcanoes, width = "100%" ) %>%
+  addProviderTiles( providers$Esri.NatGeoWorldMap ) %>%
+  setView(lng = -121.49, lat = 46.206, zoom = 9) %>%
+  addAwesomeMarkers( lng   = ~Longitude,
+              lat   = ~Latitude,
+              # color = ~pal(Type),
+              icon  = icons,
+              popup = ~paste("<h4>", Name, "</h4>",
+                             "<br/>Type: <b>", Type, "</b><br/>",
+                             "Elevation: ", ElevationFeets, "feets (",
+                             ElevationMeters, "m)<br/>",
+                             "Last eruption date: ", LastEruptionDate, "<br/>",
+                             "Last eruption VEI: <tt>",
+                             LastEruptionVEI, "</tt>") ) %>%
+  addLegend( position = 'topright',
+              title = "Last eruption VEI",
+              colors = c("#71AF26", "#BBF970", "#F69730", "#D53E2A", "#CB4FB3", "#B0B0B0"), 
+              labels = c("1", "2", "3", "4", "5+", "Unknown"),
+              opacity = 0.7 ) %>%
+  addMiniMap( position = 'bottomright', toggleDisplay = TRUE )
+
+# Print it!
+cv_plot
+```
+
+
+
+This document corresponds with the interactive **Leaflet** map required at the
+peer-graded assignment for the "*Developing Data Products*" course on
+[Coursera](https://www.coursera.org/learn/data-products/).
+
+A desktop wallpaper image of the
+[Mount Adams](https://en.wikipedia.org/wiki/Mount_Adams_(Washington))
+was the inspiration for this project. I picked up the
+[Wikipedia's list of Cascade Volcanoes](https://en.wikipedia.org/wiki/List_of_Cascade_volcanoes)
+(with location coordinates) and convert the data to a CSV format
+suitable for loading from **R**.
+
+## Building the map
+
+### Getting the data
+
+The data is loaded directly from the CSV file (available in the
+same **GitHub** repository):
+
+```{r ref.label="data-loading", eval=FALSE}
+```
+
+### Explanatory Data Analysis
+
+The volcanoes data consists in 10 variables. We will use
+the `Latitude` and `Longitude` for the position markers, the
+[Volcanic Explosivity Index](https://en.wikipedia.org/wiki/VEI)
+for the markers color and text. The rest of the
+information will be shown in the *popups*.
+
+```{r eda}
+str(cascade_volcanoes)
+```
+
+
+### The map
+
+We want to show the volcanoes position over a topography map,
+so we choose the "[Esri.NatGeoWorldMap](https://www.arcgis.com/home/item.html?id=b9b1b422198944fbbd5250b3241691b6)".
+The map will be centered at the **Mount Adams**.
+
+Each marker will have the VEI number if it's available and have
+a color associated with this VEI (a legend is shown in the corner).
+As seen in the [Leaflet documentation](https://rstudio.github.io/leaflet/markers.html),
+we will use auxiliary functions to configure the color and labels for the
+[AwesomeIcons](https://www.rdocumentation.org/packages/leaflet/versions/1.1.0/topics/awesomeIcons)
+markers.
+
+We will use *popups* to show aditional information about the volcanoes:
+name, type, elevation, last eruption date and VEI.
+
+```{r ref.label="the-plot", eval=FALSE}
+```
