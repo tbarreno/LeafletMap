@@ -1,0 +1,149 @@
+---
+title: "2016 Parties in New York"
+author: "Tinguaro Barreno"
+date: "November 3, 2017"
+output:
+  ioslides_presentation:
+    widescreen: true
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r library-load, echo=FALSE, message=FALSE, warning=FALSE}
+library(plotly)
+```
+
+## Introduction
+
+The New York city hotline receives non-urgent community concerns, which are made public by
+the city through [NYC Open Data](https://opendata.cityofnewyork.us/) portal.
+
+The dataset that we've chosen focuses on Noise complaints that were collected in 2016 and
+indicate ongoing party in a given neighborhood.
+
+In this report we will show few different plots around this data set.
+
+## Getting the data
+
+I've chosen this data set beause it includes time series (creation/close date), grouped information (incidents by city/borough) and geoposition of the incidents.
+
+The data has been obtained from the [Kaggle](https://www.kaggle.com/) dataset
+'[partyntc](https://www.kaggle.com/somesnm/partynyc)'.
+
+```{r getting-the-data, echo=FALSE, message=FALSE, warning=FALSE, cache=TRUE}
+library( lubridate )
+
+# Loading the data
+parties <- read.csv( "party_in_nyc.csv" )
+
+# Format conversion
+parties$Created.Date <-ymd_hms( as.character(parties$Created.Date) )
+parties$Closed.Date <- ymd_hms( as.character(parties$Closed.Date) )
+```
+
+## Data explanatory analysis
+
+The data set contains 225,414 incidents (observations) with this structure:
+
+```{r data-explanatory-analysis, echo=FALSE}
+# Data set structure
+str( parties )
+```
+
+## Incidents by month
+
+This time series plot show the number of noise complains aggregated by month in 2016.
+
+```{r plot-time-series, echo=FALSE, width="100%"}
+# First: we need to count the incidents by month. As seen in StackOverflow:
+# https://stackoverflow.com/questions/15181147/summarise-data-into-monthly-counts-by-year
+parties_months <- data.frame( month=format( as.POSIXct(parties$Created.Date), "%Y-%m" ) )
+incidents_by_month <- as.data.frame( table(parties_months) )
+
+# Building the plot
+plot_ly( x = ~incidents_by_month$parties_months,
+         y = ~incidents_by_month$Freq,
+         type = "scatter",
+         mode = "lines+markers",
+         marker = list( size = 15, color = "#52006d" ),
+         showlegend = FALSE,
+         hoverinfo = "text",
+         text = paste0( "<br><b>", incidents_by_month$parties_months,
+                        "</b></br> Incidents: ",
+                        incidents_by_month$Freq) ) %>%
+  layout( showlegend = FALSE,
+          title = "Incidents by month",
+          xaxis = list( title = "<b>Month</b>",
+                        ticks = "inside",
+                        tickangle = 15 ),
+          yaxis = list( title = "<b>Incidents per month in NYC (2016)</b>",
+                        ticks = "inside",
+                        gridwidth = 2,
+                        gridcolor = "lightgray" ) )
+```
+
+
+## Incidents by Borough
+
+This bar plot shows the incidents per Borough. 
+
+```{r plot-bars, echo=FALSE, width="100%"}
+# Incident aggregation
+incidents_by_city <- as.data.frame( table(parties$Borough) )
+colnames( incidents_by_city ) <- c( "Borough", "IncidentCount" )
+incidents_by_city$Borough <- factor(
+  incidents_by_city$Borough,
+  levels = unique(incidents_by_city$Borough)[order(
+    incidents_by_city$IncidentCount, decreasing = TRUE )])
+
+# Building the plot
+plot_ly( x = ~incidents_by_city$Borough,
+         y = ~incidents_by_city$IncidentCount,
+         type = "bar",
+               marker = list( size = 15, color = "#52006d" ),
+               showlegend = FALSE,
+               hoverinfo = "text",
+               text = paste0( "<br><b>", incidents_by_city$Borough,
+                              "</b></br> Incidents: ",
+                              incidents_by_city$IncidentCount ) ) %>%
+  layout( showlegend = FALSE,
+          title = "Incidents by Borough",
+          xaxis = list( title = "",
+                        ticks = "inside",
+                        tickangle = 90 ),
+          yaxis = list( title = "<b>Incident count</b>",
+                        ticks = "inside",
+                        gridwidth = 2,
+                        gridcolor = "lightgray" ),
+          margin = list( r = 0,
+                         b = 150 ) )
+```
+
+## Incidents by location type
+
+Pie chart with aggregated incidents by location type.
+
+```{r plot-pie, echo=FALSE, width="100%"}
+# Incident aggregation
+incidents_by_place <- as.data.frame( table(parties$Location.Type) )
+colnames( incidents_by_place ) <- c( "Place", "IncidentCount" )
+incidents_by_place$Place <- factor(
+    incidents_by_place$Place,
+    levels = unique(incidents_by_place$Place)[order(
+         incidents_by_place$IncidentCount, decreasing = TRUE )] )
+
+# Building the plot
+plot_ly( labels = ~incidents_by_place$Place,
+         values = ~incidents_by_place$IncidentCount,
+         type = "pie",
+         showlegend = FALSE,
+         hoverinfo = "text",
+         text = paste0( "<br><b>", incidents_by_place$Place,
+                        "</b></br> Incidents: ",
+                         incidents_by_place$IncidentCount ) ) %>%
+  layout( showlegend = FALSE,
+          title = "Incidents by Place (location type)" )
+```
+
