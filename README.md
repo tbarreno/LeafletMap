@@ -13,7 +13,7 @@ This submit shows the 82 [Cascade volcanoes](https://en.wikipedia.org/wiki/Casca
 over a topographic map of the United States.
 
 The map could be viewed
-[here](https://tbarreno.github.io/R-Practices/Cascade_Volcanoes.html).
+[here](https://tbarreno.github.io/R-Practices/Leaflet/Cascade_Volcanoes.html).
 
 ### Plotly
 
@@ -25,5 +25,5 @@ My submit shows some plots about
 over 2016 (the dataset was obtained from [Kaggle](https://www.kaggle.com/)).
 
 The presentation could be viewed
-[here](https://tbarreno.github.io/Plotly/2016-NYC-Parties.html).
+[here](https://tbarreno.github.io/R-Practices/Plotly/2016-NYC-Parties.html).
 
